@@ -1,6 +1,7 @@
 FROM python:3.10-slim-buster
 
 # Install libraries
+RUN apt-get -qq update && apt-get install -y --no-install-recommends python3-opencv
 COPY ./requirements.txt ./
 RUN pip install -r requirements.txt && \
     rm ./requirements.txt
