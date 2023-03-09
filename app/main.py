@@ -291,16 +291,16 @@ def predict_sign(video):
     return 1, predicted_word, confidence.item()
 
 def process_attempt(word, video):
-    success, prediction, accuracy = predict_sign(video)
+    success, prediction, confidence = predict_sign(video)
 
     if success == 0:
-        return (0, f'Unable to process sign attempt', result, accuracy)
+        return (0, f'Unable to process sign attempt', 'Incorrect', confidence)
 
     result = 'Incorrect'
     if prediction == word:
         result = 'Correct'
     
-    return (1, f'Sign attempt processed successfully', result, accuracy)
+    return (1, f'Sign attempt processed successfully', result, confidence)
 
 # -------------------------------- ROUTES ---------------------------------
 
