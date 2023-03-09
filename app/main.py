@@ -215,8 +215,7 @@ def predict_sign(video):
             while not is_sign_complete:
                 # Capture frame from camera
                 ret, frame = cap.read()
-                cv2.imshow('Frame', frame)
-                cv2.waitKey(1)
+
                 # Add frames to buffer
                 buffer_frames.append(frame)
                 if len(buffer_frames) >= SIGN_BUFFER_SIZE:
@@ -259,7 +258,6 @@ def predict_sign(video):
             
             # Release the camera and close the window
             cap.release()
-            cv2.destroyAllWindows()
 
             # Mediapipe keypoint extraction
             mp_frames = []
@@ -278,6 +276,11 @@ def predict_sign(video):
     except Exception as e:
         print('NN Error: ', e)
         return 0, 'N/A', 0
+
+    # print("PREDICTION: ")
+    # print(predicted)
+    # confidence = softmax(y_pred[predicted])
+    # print(confidence)
 
     # Return result
     return 1, signs[predicted], softmax(y_pred[predicted])
