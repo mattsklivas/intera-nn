@@ -10,17 +10,15 @@ import os
 import sys
 import tempfile
 
-from .asl_model import AslNeuralNetwork
+from asl_model import AslNeuralNetwork
 
 app = Flask(__name__)
 CORS(app)
 
-from .asl_model import AslNeuralNetwork
-
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'app/asl_model_v3.0_15.pth'))
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.0_15.pth'))
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
