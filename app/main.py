@@ -1,6 +1,8 @@
+# Flask specific imports
 from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 
+# Python lib/pip modules
 import cv2 
 import mediapipe as mp
 import torch
@@ -10,6 +12,7 @@ import os
 import sys
 import tempfile
 
+# Import model
 from asl_model import AslNeuralNetwork
 
 app = Flask(__name__)
@@ -22,30 +25,13 @@ model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.0_15.pth')
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
-signs = {
-    0:'bad', 
-    1:'bye', 
-    2:'easy', 
-    3:'good', 
-    4:'happy', 
-    5:'hello', 
-    6:'like', 
-    7:'me', 
-    8:'meet', 
-    9:'more', 
-    10:'no', 
-    11:'please', 
-    12:'sad', 
-    13:'she', 
-    14:'sorry', 
-    15:'thank you', 
-    16:'want', 
-    17:'why', 
-    18:'yes', 
-    19:'you'
-}
+signs = ['bad', 'bye', 'easy', 'good', 'happy', 'hello', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'why', 'yes', 'you']
 
-# -------------------------------- UTILS ---------------------------------
+# Temporal fit constants
+INPUT_SIZE = 226
+NUM_SEQUENCES = 48
+
+# -------------------------------- UTIL FUNCTIONS ---------------------------------
 
 def processing_frame(frame, holistic):
     # Initialize pose and left/right hand tensoqs
@@ -141,8 +127,6 @@ def get_holistic_model():
     
     return holistic
 
-INPUT_SIZE = 226
-NUM_SEQUENCES = 48
 def live_video_temporal_fit(frames):
     # Calculate num frames over or under data frames input limit 
     num_frames = len(frames)
@@ -188,6 +172,18 @@ def live_video_temporal_fit(frames):
         torch_frames[0][seq] = frame
     
     return torch_frames
+
+def quick_fit(frames):
+    num_frames = len(frames)
+    missing_frames = abs(NUM_SEQUENCES - num_frames)
+    frame_pop = range(num_frames)
+
+    frame_indices = sorted(random.sample(frame_pop, missing_frames), reverse=True)
+
+    for frame_index in frame_indices:
+        frames.pop(frame_index)
+
+    return frames
 
 def softmax(output):
     e = torch.exp(output)
@@ -255,6 +251,9 @@ def predict_sign(video):
                     buffer_frames = []
 
             print(f'Final Video: {len(frames)}')
+
+            if len(frames) > 55:
+                frames = quick_fit(frames)
             
             # Release the camera and close the window
             cap.release()
@@ -277,25 +276,31 @@ def predict_sign(video):
         print('NN Error: ', e)
         return 0, 'N/A', 0
 
-    # print("PREDICTION: ")
-    # print(predicted)
-    # confidence = softmax(y_pred[predicted])
-    # print(confidence)
+    # Get the confidence %
+    y_prob = softmax(y_pred)
+    confidence = y_prob[0][predicted]
+
+    try:
+        predicted_word = signs[predicted]
+    except Exception as e:
+        predicted_word = 'N/A'
+
+    print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
 
     # Return result
-    return 1, signs[predicted], softmax(y_pred[predicted])
+    return 1, predicted_word, confidence.item()
 
 def process_attempt(word, video):
-    success, prediction, accuracy = predict_sign(video)
+    success, prediction, confidence = predict_sign(video)
 
     if success == 0:
-        return (0, f'Unable to process sign attempt', result, accuracy)
+        return (0, f'Unable to process sign attempt', 'Incorrect', confidence)
 
     result = 'Incorrect'
     if prediction == word:
         result = 'Correct'
     
-    return (1, f'Sign attempt processed successfully', result, accuracy)
+    return (1, f'Sign attempt processed successfully', result, confidence)
 
 # -------------------------------- ROUTES ---------------------------------
 
@@ -318,12 +323,12 @@ def submit_answer():
     if word is None:
         return jsonify(error='No word provided', status=400)
 
-    status, message, result, accuracy = process_attempt(word, video)
+    status, message, result, confidence = process_attempt(word, video)
 
     if status == 0:
         return jsonify(error=message, status=401)
     else:
-        return jsonify(message=message, data={'word': word, 'result': result, 'accuracy': accuracy}, status=200)
+        return jsonify(message=message, data={'word': word, 'result': result, 'confidence': confidence}, status=200)
 
 
 if __name__ == "__main__":
