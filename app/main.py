@@ -380,20 +380,13 @@ def process_sign():
     room_id = request.form.get('room_id')
     from_user = request.form.get('from_user')
     to_user = request.form.get('to_user')
-    text = request.form.get('message')
-    type = request.form.get('type')
 
-    # todo can clean up and make method to append all errors
     if room_id is None:
         return jsonify(error='Room ID not provided', status=400)
     if to_user is None:
         return jsonify(error='To User not provided', status=400)
     if to_user is None:
         return jsonify(error='To User not provided', status=400)
-    if text is None:
-        return jsonify(error='Message not provided', status=400)
-    if type is None:
-        return jsonify(error='Message type not provided', status=400)
 
     status, message, prediction, confidence = process_sign(video)
 
