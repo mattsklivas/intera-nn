@@ -3,6 +3,9 @@ from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 
 # Python lib/pip modules
+from datetime import datetime
+from dotenv import find_dotenv, load_dotenv
+from pymongo import errors, results
 import cv2 
 import mediapipe as mp
 import torch
@@ -12,11 +15,25 @@ import os
 import sys
 import tempfile
 
-# Import model
+# Project imports
 from asl_model import AslNeuralNetwork
+from config import Database
+
+# load the environment variables from the .env file
+load_dotenv(find_dotenv())
 
 app = Flask(__name__)
 CORS(app)
+
+# get a reference to the databases
+intera_calls_db = Database.client[Database.intera_calls_db]
+
+# get a reference to the collections
+try: 
+    messages = intera_calls_db[Database.messages_collection]
+    rooms = intera_calls_db[Database.rooms_collection]
+except errors.CollectionInvalid as err:
+    print(err)
 
 # Load model
 current_dir = os.getcwd()
@@ -290,17 +307,37 @@ def predict_sign(video):
     # Return result
     return 1, predicted_word, confidence.item()
 
-def process_attempt(word, video):
+def process_sign(video, word=None):
     success, prediction, confidence = predict_sign(video)
 
     if success == 0:
         return (0, f'Unable to process sign attempt', 'Incorrect', confidence)
 
-    result = 'Incorrect'
-    if prediction == word:
-        result = 'Correct'
+    # Practice module
+    if word:
+        result = 'Incorrect'
+        if prediction == word:
+            result = 'Correct'
+        return (1, f'Sign attempt processed successfully', result, confidence)
+    # Video calls
+    else:
+        return (1, f'Sign attempt processed successfully', prediction, confidence)
+
+def create_message_entry(room_id, to_user, from_user, prediction):
+    message = {'date_created': datetime.now(), 'room_id': room_id, 'to': to_user, 'from': from_user, 'text': prediction,\
+        'edited': False, 'message_type': 'ASL', 'corrected': ''}
+
+    result = messages.insert_one(message)
+
+    if isinstance(result, results.InsertOneResult):
+        if result.inserted_id:
+
+            # Add message reference to corresponding room document
+            rooms.find_one_and_update({'room_id': room_id}, {'$push': {'messages': result.inserted_id}})
+
+            return (1, 'Message created successfully')
     
-    return (1, f'Sign attempt processed successfully', result, confidence)
+    return (0, 'Error creating message entry')
 
 # -------------------------------- ROUTES ---------------------------------
 
@@ -323,13 +360,51 @@ def submit_answer():
     if word is None:
         return jsonify(error='No word provided', status=400)
 
-    status, message, result, confidence = process_attempt(word, video)
+    status, message, result, confidence = process_sign(video, word)
 
     if status == 0:
         return jsonify(error=message, status=401)
     else:
         return jsonify(message=message, data={'word': word, 'result': result, 'confidence': confidence}, status=200)
 
+@app.route("/process_sign", methods=["POST"])
+def process_sign():
+    video = request.files.get('video', None)
+    if video is not None:
+        video = video.read()
+    else:
+        return jsonify(error='No video provided', status=400)
+
+    room_id = request.form.get('room_id')
+    from_user = request.form.get('from_user')
+    to_user = request.form.get('to_user')
+    text = request.form.get('message')
+    type = request.form.get('type')
+
+    # todo can clean up and make method to append all errors
+    if room_id is None:
+        return jsonify(error='Room ID not provided', status=400)
+    if to_user is None:
+        return jsonify(error='To User not provided', status=400)
+    if to_user is None:
+        return jsonify(error='To User not provided', status=400)
+    if text is None:
+        return jsonify(error='Message not provided', status=400)
+    if type is None:
+        return jsonify(error='Message type not provided', status=400)
+
+    status, message, prediction, confidence = process_sign(video)
+
+    if status == 0:
+        return jsonify(error=message, status=401)
+
+    # update messages array
+    status, message = create_message_entry(room_id, to_user, from_user, prediction)
+
+    if status == 0:
+        return jsonify(error=message, status=401)
+
+    return jsonify(message=message, data={'room_id': room_id, 'prediction': prediction, 'confidence': confidence}, status=200)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8080)
