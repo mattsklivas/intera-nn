@@ -307,6 +307,8 @@ def predict_sign(video):
     # Return result
     return 1, predicted_word, confidence.item()
 
+# -------------------------------- CONTROLLERS ---------------------------------
+
 def process_sign(video, word=None):
     success, prediction, confidence = predict_sign(video)
 
