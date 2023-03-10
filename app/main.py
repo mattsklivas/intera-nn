@@ -309,7 +309,7 @@ def predict_sign(video):
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
-def process_sign(video, word=None):
+def process_video(video, word=None):
     success, prediction, confidence = predict_sign(video)
 
     if success == 0:
@@ -362,7 +362,7 @@ def submit_answer():
     if word is None:
         return jsonify(error='No word provided', status=400)
 
-    status, message, result, confidence = process_sign(video, word)
+    status, message, result, confidence = process_video(video, word)
 
     if status == 0:
         return jsonify(error=message, status=401)
@@ -387,7 +387,7 @@ def process_sign():
     if to_user is None:
         return jsonify(error='To User not provided', status=400)
 
-    status, message, prediction, confidence = process_sign(video)
+    status, message, prediction, confidence = process_video(video)
 
     if status == 0:
         return jsonify(error=message, status=401)
