@@ -5,6 +5,7 @@ numpy
 opencv-python
 mediapipe
 pymongo
+dnspython
 python-dotenv
 
 --extra-index-url https://download.pytorch.org/whl/cpu
