@@ -417,6 +417,9 @@ def process_sign():
     if status == 0:
         return jsonify(error=message, status=401)
 
+    if confidence < 0.6:
+        message = f'[INFO: Low confidence in ASL sign(s) predicted. (Prediction made: {prediction})]'
+
     # update messages array
     status, message = create_message_entry(room_id, to_user, from_user, prediction)
 
