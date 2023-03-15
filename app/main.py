@@ -297,7 +297,7 @@ def predict_sign(video, multiple=False):
     
     except Exception as e:
         print('NN Error: ', e)
-        return 0, 'N/A', 0
+        return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
     # Get the confidence %
     y_prob = softmax(y_pred)
@@ -325,20 +325,20 @@ def predict_sign(video, multiple=False):
         confidence = conf_vals[0]
 
     # Return result
-    return 1, prediction, confidence
+    return 1, prediction, confidence, None
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
 def process_video(video, word=None):
     # Predict one sign (practice module)
     if word:
-        success, prediction, confidence = predict_sign(video, False)
+        success, prediction, confidence, error = predict_sign(video, False)
     # Predict multiple (video calls)
     else:
-        success, prediction, confidence = predict_sign(video, True)
+        success, prediction, confidence, error = predict_sign(video, True)
 
     if success == 0:
-        return (0, f'Unable to process sign attempt', 'Incorrect', confidence)
+        return (0, error, 'Incorrect', confidence)
 
     # Practice module
     if word:
@@ -346,6 +346,7 @@ def process_video(video, word=None):
         if prediction == word:
             result = 'Correct'
         return (1, f'Sign attempt processed successfully', result, confidence)
+
     # Video calls
     else:
         return (1, f'Sign attempt processed successfully', prediction, confidence)
@@ -420,7 +421,7 @@ def process_sign():
     if confidence < 0.6:
         message = f'[INFO: Low confidence in ASL sign(s) predicted. (Prediction made: {prediction})]'
 
-    # update messages array
+    # Append message to chat
     status, message = create_message_entry(room_id, to_user, from_user, prediction)
 
     if status == 0:
