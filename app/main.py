@@ -207,7 +207,13 @@ def softmax(output):
     return e / e.sum()
 
 # Predict sign being performed
-def predict_sign(video):
+def predict_sign(video, multiple=False):
+
+    # List of predicted words
+    predictions = []
+    conf_vals = []
+
+    # TODO: update to process multiple signs
     try:
         holistic = get_holistic_model()
 
@@ -291,7 +297,7 @@ def predict_sign(video):
     
     except Exception as e:
         print('NN Error: ', e)
-        return 0, 'N/A', 0
+        return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
     # Get the confidence %
     y_prob = softmax(y_pred)
@@ -304,16 +310,35 @@ def predict_sign(video):
 
     print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
 
+    # Append to list of predicted words and confidence percentages
+    predictions.append(predicted_word)
+    conf_vals.append(confidence.item())
+
+    # Next iteration
+
+    # Before returning, concat string and get avg confidence
+    if multiple:
+        prediction = " ".join(predictions)
+        confidence = sum(conf_vals)/len(conf_vals)
+    else:
+        prediction = predictions[0]
+        confidence = conf_vals[0]
+
     # Return result
-    return 1, predicted_word, confidence.item()
+    return 1, prediction, confidence, None
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
 def process_video(video, word=None):
-    success, prediction, confidence = predict_sign(video)
+    # Predict one sign (practice module)
+    if word:
+        success, prediction, confidence, error = predict_sign(video, False)
+    # Predict multiple (video calls)
+    else:
+        success, prediction, confidence, error = predict_sign(video, True)
 
     if success == 0:
-        return (0, f'Unable to process sign attempt', 'Incorrect', confidence)
+        return (0, error, 'Incorrect', confidence)
 
     # Practice module
     if word:
@@ -321,6 +346,7 @@ def process_video(video, word=None):
         if prediction == word:
             result = 'Correct'
         return (1, f'Sign attempt processed successfully', result, confidence)
+
     # Video calls
     else:
         return (1, f'Sign attempt processed successfully', prediction, confidence)
@@ -390,9 +416,11 @@ def process_sign():
     status, message, prediction, confidence = process_video(video)
 
     if status == 0:
-        return jsonify(error=message, status=401)
+        message = f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
+    elif confidence < 0.6:
+        message = f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
 
-    # update messages array
+    # Append message to chat
     status, message = create_message_entry(room_id, to_user, from_user, prediction)
 
     if status == 0:
