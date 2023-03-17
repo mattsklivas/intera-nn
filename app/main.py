@@ -4,6 +4,7 @@ from flask_cors import CORS
 
 # Python lib/pip modules
 from datetime import datetime
+from os import environ as env
 from dotenv import find_dotenv, load_dotenv
 from pymongo import errors, results
 import cv2 
@@ -20,11 +21,11 @@ import tempfile
 from asl_model import AslNeuralNetwork
 from config import Database
 
-# OpenAPI key
-openai.api_key = "x"
-
 # load the environment variables from the .env file
 load_dotenv(find_dotenv())
+
+# OpenAPI key
+openai.api_key = env.get('OPENAI_API_KEY')
 
 app = Flask(__name__)
 CORS(app)
