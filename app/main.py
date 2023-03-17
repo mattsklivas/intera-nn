@@ -4,6 +4,7 @@ from flask_cors import CORS
 
 # Python lib/pip modules
 from datetime import datetime
+from os import environ as env
 from dotenv import find_dotenv, load_dotenv
 from pymongo import errors, results
 import cv2 
@@ -12,6 +13,7 @@ import torch
 import random
 import math
 import os
+import openai
 import sys
 import tempfile
 
@@ -21,6 +23,9 @@ from config import Database
 
 # load the environment variables from the .env file
 load_dotenv(find_dotenv())
+
+# OpenAPI key
+openai.api_key = env.get('OPENAI_API_KEY')
 
 app = Flask(__name__)
 CORS(app)
@@ -138,7 +143,7 @@ def get_holistic_model():
 
     # Instantiate holistic model, specifying minimum detection and tracking confidence levels
     holistic = mp_holistic.Holistic(
-        static_image_mode=True,
+        static_image_mode=False,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) 
     
@@ -206,87 +211,138 @@ def softmax(output):
     e = torch.exp(output)
     return e / e.sum()
 
-# Predict sign being performed
-def predict_sign(video, multiple=False):
+# Predict multiple live sign from video call
+def predict_live_sign(video):
+    word_signs = [[]]
+    curr_sign_index = 0
+    next_word_started = False
+
+    no_sign_count = 0
+    NEXT_SIGN_BUFF = 6
 
     # List of predicted words
     predictions = []
     conf_vals = []
 
-    # TODO: update to process multiple signs
+    try:
+        holistic = get_holistic_model()
+
+        with tempfile.NamedTemporaryFile(suffix = '.webm') as temp:
+            temp.write(video)            
+
+            # Collect frames until no more frames remain 
+            cap = cv2.VideoCapture(temp.name)
+            while True:
+                # Capture frame from camera
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                # Process every frame
+                processed_frame = processing_frame(frame, holistic)
+
+                # Landmarks detected in frame
+                if processed_frame != []:
+                    # Reset count and set next sign started to true
+                    no_sign_count = 0     
+                    if not next_word_started: 
+                        print('New word started!')
+                        next_word_started = True
+
+                    # Add processed frame to current sign frames
+                    word_signs[curr_sign_index].append(processed_frame)
+                    print(' + Frame Added')
+                # Empty frame
+                else:
+                    # Count num consecutive empty frames
+                    no_sign_count += 1
+
+                    # Start new sign word after n consecutive empty frames
+                    if no_sign_count >= NEXT_SIGN_BUFF:
+                        no_sign_count = 0
+
+                        # Only add new word after previous word is complete
+                        if next_word_started:
+                            print('End of sign detected! Waiting for start of next word!')
+                            curr_sign_index += 1
+                            word_signs.append([])
+                            next_word_started = False
+
+            # Release the camera and close the window
+            cap.release()
+
+        # For each word, fit the word to 48 frames then pass to model
+        for sign_word_frames in word_signs:
+            fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
+
+            # Pass to model and add to prediction sentence
+            y_pred = model(fitted_sign_frames)
+            _, predicted = torch.max(y_pred.data, 1)
+
+            predicted_word = signs[predicted]
+            predictions.append(predicted_word)
+
+            # Get the confidence %
+            y_prob = softmax(y_pred)
+            confidence = y_prob[0][predicted] 
+            conf_vals.append(confidence.item())
+
+            print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
+
+    except Exception as e:
+        print('NN Error: ', e)
+        return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
+
+
+    # Append to list of predicted words and confidence percentages
+    predictions.append(predicted_word)
+    conf_vals.append(confidence.item())
+
+    prediction = " ".join(predictions)
+    response = openai.Completion.create(
+        model="text-curie-001",
+        prompt=f"Give the grammatically-correct version of this phrase : {prediction}",
+        temperature=0.7,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+        )
+    prediction = response.choices[0].text.strip()
+    confidence = sum(conf_vals)/len(conf_vals)
+
+    # Return result
+    return 1, prediction, confidence, None
+
+
+# Predict single sign from practice module
+def predict_single_sign(video):
+    # Processed frames
+    mp_frames = []
+
     try:
         holistic = get_holistic_model()
 
         with tempfile.NamedTemporaryFile(suffix = '.webm') as temp:
             temp.write(video)
 
+            # Collect frames until video is complete
             cap = cv2.VideoCapture(temp.name)
-            frames = []
-            buffer_frames = []
-            
-            END_SIGN_BUFFER = 3
-            SIGN_BUFFER_SIZE = 12
-            has_sign_started = False
-            is_sign_complete = False
-
-            # Collect frames until sign is complete
-            frame_count = 0
-            while not is_sign_complete:
+            while True:
                 # Capture frame from camera
                 ret, frame = cap.read()
+                if not ret:
+                    break
 
-                # Add frames to buffer
-                buffer_frames.append(frame)
-                if len(buffer_frames) >= SIGN_BUFFER_SIZE:
-                    frame_count += SIGN_BUFFER_SIZE
-                    print(f'Fc = {frame_count}')
-                    # Process every 12th frame (Once per second)
-                    processed_frame = processing_frame(frame, holistic)
+                # Process every frame
+                processed_frame = processing_frame(frame, holistic)
                     
-                    # Landmarks detected in frame
-                    if processed_frame != []:
-                        if not has_sign_started:
-                            # Set sign start flag
-                            has_sign_started = True
-                        
-                            # Find initial/first frame - delete all previous frames
-                            start_frame_ind = bin_search(buffer_frames, 1, holistic)
-                            buffer_frames = buffer_frames[start_frame_ind:]
-                            print(f'Start Video Check: {len(buffer_frames)}')
-                        # Add relevant start and middle frames
-                        frames.extend(buffer_frames)
-                    else:
-                        # Sign potentially completed if no landmarks detected anymore
-                        if has_sign_started:        
-                            # Find last/ending frame - delete all following frames
-                            end_frame_ind = bin_search(buffer_frames, 0, holistic)
-                            buffer_frames = buffer_frames[:end_frame_ind]    
-                            print(f'End Video Check: {len(buffer_frames)}')
-                            # Mark sign as complete if 3+ frames have no landmarks
-                            if SIGN_BUFFER_SIZE - len(buffer_frames) > END_SIGN_BUFFER:
-                                is_sign_complete = True
-                                has_sign_started = False
+                # Landmarks detected in frame
+                if processed_frame != []:
+                    frames.append(processed_frame)
 
-                            # Add relevant end frames
-                            frames.extend(buffer_frames)
-                    
-                    # Remove useless frames, reset buffer
-                    buffer_frames = []
-
-            print(f'Final Video: {len(frames)}')
-
-            if len(frames) > 55:
-                frames = quick_fit(frames)
-            
             # Release the camera and close the window
             cap.release()
-
-            # Mediapipe keypoint extraction
-            mp_frames = []
-            for frame in frames:
-                pcf = processing_frame(frame, holistic)
-                if pcf != []:
-                    mp_frames.append(pcf)
 
             # Fit
             keypoints = live_video_temporal_fit(mp_frames)
@@ -294,7 +350,6 @@ def predict_sign(video, multiple=False):
             # Neural network model prediction
             y_pred = model(keypoints)
             _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
-    
     except Exception as e:
         print('NN Error: ', e)
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
@@ -310,20 +365,6 @@ def predict_sign(video, multiple=False):
 
     print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
 
-    # Append to list of predicted words and confidence percentages
-    predictions.append(predicted_word)
-    conf_vals.append(confidence.item())
-
-    # Next iteration
-
-    # Before returning, concat string and get avg confidence
-    if multiple:
-        prediction = " ".join(predictions)
-        confidence = sum(conf_vals)/len(conf_vals)
-    else:
-        prediction = predictions[0]
-        confidence = conf_vals[0]
-
     # Return result
     return 1, prediction, confidence, None
 
@@ -332,10 +373,10 @@ def predict_sign(video, multiple=False):
 def process_video(video, word=None):
     # Predict one sign (practice module)
     if word:
-        success, prediction, confidence, error = predict_sign(video, False)
+        success, prediction, confidence, error = predict_single_sign(video)
     # Predict multiple (video calls)
     else:
-        success, prediction, confidence, error = predict_sign(video, True)
+        success, prediction, confidence, error = predict_live_sign(video)
 
     if success == 0:
         return (0, error, 'Incorrect', confidence)
