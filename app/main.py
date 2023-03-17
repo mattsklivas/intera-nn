@@ -283,6 +283,9 @@ def predict_live_sign(video):
         try:
             # For each word, fit the word to 48 frames then pass to model
             for sign_word_frames in word_signs:
+                if len(sign_word_frames) == 0:
+                    continue
+
                 fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
 
                 if not isinstance(fitted_sign_frames, list):
@@ -359,20 +362,23 @@ def predict_single_sign(video):
             cap.release()
 
             # Fit
-            keypoints = live_video_temporal_fit(mp_frames)
+            y_pred = None
+            predicted = None
+            if len(mp_frames) > 0:
+                keypoints = live_video_temporal_fit(mp_frames)
 
-            # Neural network model prediction
-            y_pred = model(keypoints)
-            _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
+                # Neural network model prediction
+                y_pred = model(keypoints)
+                _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
+
     except Exception as e:
         print('NN Error: ', e)
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
-    # Get the confidence %
-    y_prob = softmax(y_pred)
-    confidence = y_prob[0][predicted]
-
     try:
+        # Get the confidence %
+        y_prob = softmax(y_pred)
+        confidence = y_prob[0][predicted]
         predicted_word = signs[predicted]
     except Exception as e:
         predicted_word = 'N/A'
