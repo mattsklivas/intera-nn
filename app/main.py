@@ -96,7 +96,7 @@ def processing_frame(frame, holistic):
 
     # No pose detected
     if not results.pose_landmarks:
-        pose = torch.zeros(25 * 4)
+        pose = torch.zeros(25 * 3)
     # Pose detected
     else:
         # Add pose keypoints (25 w/ 3d coordinates plus visbility probability)
@@ -106,7 +106,7 @@ def processing_frame(frame, holistic):
             if k >= 25:
                 break
 
-            shift_ind = k * 4
+            shift_ind = k * 3
             pose[shift_ind] = landmark.x
             pose[shift_ind + 1] = landmark.y
             pose[shift_ind + 2] = landmark.z  
