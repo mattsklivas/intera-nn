@@ -43,7 +43,7 @@ except errors.CollectionInvalid as err:
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.0_15.pth'))
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.9.pth'))
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
