@@ -46,7 +46,7 @@ class AslNeuralNetwork(nn.Module):
         in_fc2 = self.relu(out_fc1)
         
         out_fc2 = self.fc2(in_fc2)
-        in_fc3 = self.relu(out_fc1)
+        in_fc3 = self.relu(out_fc2)
     
         # Note: Softmax already included in cross entropy loss function
         out = self.fc3(in_fc3)
