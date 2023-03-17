@@ -457,17 +457,17 @@ def process_sign():
     status, message, prediction, confidence = process_video(video)
 
     if status == 0:
-        message = f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
+        message += f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
     elif confidence < 0.6:
-        message = f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
+        message += f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
 
     # Append message to chat
-    status, message = create_message_entry(room_id, to_user, from_user, prediction)
+    status, m_ = create_message_entry(room_id, to_user, from_user, prediction)
 
     if status == 0:
         return jsonify(error=message, status=401)
 
-    return jsonify(message=message, data={'room_id': room_id, 'prediction': prediction, 'confidence': confidence}, status=200)
+    return jsonify(message=m_, data={'room_id': room_id, 'prediction': prediction, 'confidence': confidence}, status=200)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8080)
