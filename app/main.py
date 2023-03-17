@@ -43,7 +43,7 @@ except errors.CollectionInvalid as err:
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.9.pth'))
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.9.pth'), map_location=torch.device('cpu'))
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
@@ -392,14 +392,11 @@ def predict_single_sign(video):
 
 def process_video(video, word=None):
     # Predict one sign (practice module)
-    type = 'practice'
     if word:
         success, prediction, confidence, error = predict_single_sign(video)
-        type = 'practice'
     # Predict multiple (video calls)
     else:
         success, prediction, confidence, error = predict_live_sign(video)
-        type = 'call '
 
     if success == 0:
         return (0, error, f'Incorrect', confidence)
