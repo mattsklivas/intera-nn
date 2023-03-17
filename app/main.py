@@ -411,7 +411,7 @@ def process_video(video, word=None):
 
     # Video calls
     else:
-        prediction = f'{signs}\n{prediction}' if len(signs) > 0 else prediction
+        prediction = f'{signs}\n{prediction}' if len(signs) > 1 else prediction
         return (1, f'Sign attempt processed successfully', prediction, confidence)
 
 def create_message_entry(room_id, to_user, from_user, prediction):
