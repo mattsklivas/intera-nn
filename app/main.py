@@ -149,9 +149,14 @@ def get_holistic_model():
     
     return holistic
 
+import traceback
 def live_video_temporal_fit(frames):
     # Calculate num frames over or under data frames input limit 
-    num_frames = len(frames)
+    try:
+        print(f'Frames: {len(frames)}')
+        num_frames = len(frames)
+    except Exception as e:
+        print(f'Error: {e}')
     missing_frames = NUM_SEQUENCES - num_frames
 
     if missing_frames == 0:
@@ -295,7 +300,7 @@ def predict_live_sign(video):
             print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}'
+            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}' + traceback.print_exc()
 
     except Exception as e:
         print('NN Error: ', e)
