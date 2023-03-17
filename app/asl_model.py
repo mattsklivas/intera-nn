@@ -15,7 +15,8 @@ class AslNeuralNetwork(nn.Module):
         self.fc_hidden_size = fc_hidden_size
         
         # Create device with gpu support
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cpu')
 
         # Define neural network architecture and activiation function
         # Long Short Term Memory (Lstm) and Fully Connected (Fc) Layers
