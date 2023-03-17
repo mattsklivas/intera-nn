@@ -285,22 +285,23 @@ def predict_live_sign(video):
             for sign_word_frames in word_signs:
                 fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
 
-                # Pass to model and add to prediction sentence
-                y_pred = model(fitted_sign_frames)
-                _, predicted = torch.max(y_pred.data, 1)
+                if not isinstance(fitted_sign_frames, list):
+                    # Pass to model and add to prediction sentence
+                    y_pred = model(fitted_sign_frames)
+                    _, predicted = torch.max(y_pred.data, 1)
 
-                predicted_word = signs[predicted]
-                predictions.append(predicted_word)
+                    predicted_word = signs[predicted]
+                    predictions.append(predicted_word)
 
-                # Get the confidence %
-                y_prob = softmax(y_pred)
-                confidence = y_prob[0][predicted] 
-                conf_vals.append(confidence.item())
+                    # Get the confidence %
+                    y_prob = softmax(y_pred)
+                    confidence = y_prob[0][predicted] 
+                    conf_vals.append(confidence.item())
 
             print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}' + traceback.print_exc()
+            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])} {traceback.print_exc()}'
 
     except Exception as e:
         print('NN Error: ', e)
