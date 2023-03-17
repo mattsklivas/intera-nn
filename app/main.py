@@ -366,7 +366,7 @@ def predict_single_sign(video):
     print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
 
     # Return result
-    return 1, predicted_word, confidence, None
+    return 1, predicted_word, confidence.item(), None
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
