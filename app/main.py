@@ -295,8 +295,6 @@ def predict_live_sign(video):
 
 
     # # Append to list of predicted words and confidence percentages
-    # predictions.append(predicted_word)
-    # conf_vals.append(confidence.item())
     prediction = predictions[0]
     if len(predictions) > 1:
         prediction = " ".join(predictions)
@@ -381,11 +379,11 @@ def process_video(video, word=None):
         success, prediction, confidence, error = predict_live_sign(video)
 
     if success == 0:
-        return (0, error, 'Incorrect', confidence)
+        return (0, error, 'Incorrect + error', confidence)
 
     # Practice module
     if word:
-        result = 'Incorrect'
+        result = 'Incorrect + practice'
         if prediction == word:
             result = 'Correct'
         return (1, f'Sign attempt processed successfully', result, confidence)
