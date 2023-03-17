@@ -5,7 +5,7 @@ import torch.nn as nn
 # PyTorch Deployment Flask : https://www.youtube.com/watch?v=bA7-DEtYCNM
 
 class AslNeuralNetwork(nn.Module):
-    def __init__(self, input_size=226, lstm_hidden_size=128, fc_hidden_size=64, output_size=20, num_lstm_layers=3):
+    def __init__(self, input_size=201, lstm_hidden_size=128, fc_hidden_size=64, output_size=62, num_lstm_layers=3):
         # Call Neural network module initialization
         super(AslNeuralNetwork, self).__init__()
 

@@ -43,7 +43,7 @@ except errors.CollectionInvalid as err:
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.0_15.pth'), map_location=torch.device('cpu'))
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v4.0.pth'), map_location=model.device)
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
@@ -427,7 +427,7 @@ def create_message_entry(room_id, to_user, from_user, prediction):
             rooms.find_one_and_update({'room_id': room_id}, {'$push': {'messages': result.inserted_id}})
 
             return (1, 'Message created successfully')
-    
+
     return (0, 'Error creating message entry')
 
 # -------------------------------- ROUTES ---------------------------------
