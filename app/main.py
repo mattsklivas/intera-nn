@@ -110,7 +110,7 @@ def processing_frame(frame, holistic):
             pose[shift_ind] = landmark.x
             pose[shift_ind + 1] = landmark.y
             pose[shift_ind + 2] = landmark.z  
-            pose[shift_ind + 3] = landmark.visibility  
+            # pose[shift_ind + 3] = landmark.visibility  
 
     # Concatenate processed frame
     return torch.cat([left_hand, right_hand, pose])
