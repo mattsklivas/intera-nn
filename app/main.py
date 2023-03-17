@@ -50,14 +50,14 @@ model.load_state_dict(model_state_dict)
 signs = ['bad', 'bye', 'easy', 'good', 'happy', 'hello', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'why', 'yes', 'you']
 
 # Temporal fit constants
-INPUT_SIZE = 226
+INPUT_SIZE = 201 #226
 NUM_SEQUENCES = 48
 
 # -------------------------------- UTIL FUNCTIONS ---------------------------------
 
 def processing_frame(frame, holistic):
     # Initialize pose and left/right hand tensoqs
-    left_hand, right_hand, pose = torch.zeros(21 * 3), torch.zeros(21 * 3), torch.zeros(25 * 4)
+    left_hand, right_hand, pose = torch.zeros(21 * 3), torch.zeros(21 * 3), torch.zeros(25 * 3)
 
     # Pass frame to model by reference (not writeable) for improving performance
     frame.flags.writeable = False
