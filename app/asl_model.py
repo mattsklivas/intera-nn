@@ -63,7 +63,7 @@ import torch.nn as nn
 # 201 datapoints from 67 landmarks - 21 in x,y,z per hand and 25 in x,y,z for pose
 # 20 signs/classes currently recognized by model (out of 200)
 INPUT_SIZE = 201
-OUTPUT_SIZE = 100
+OUTPUT_SIZE = 62
 
 # -- Neurons -- #
 # Default 4 biLSTM layers
