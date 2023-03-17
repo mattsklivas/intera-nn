@@ -341,7 +341,7 @@ def predict_single_sign(video):
                     
                 # Landmarks detected in frame
                 if processed_frame != []:
-                    frames.append(processed_frame)
+                    mp_frames.append(processed_frame)
 
             # Release the camera and close the window
             cap.release()
@@ -368,7 +368,7 @@ def predict_single_sign(video):
     print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
 
     # Return result
-    return 1, prediction, confidence, None
+    return 1, predicted_word, confidence, None
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
