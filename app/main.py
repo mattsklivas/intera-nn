@@ -372,14 +372,17 @@ def predict_single_sign(video):
 
 def process_video(video, word=None):
     # Predict one sign (practice module)
+    type = 'practice'
     if word:
         success, prediction, confidence, error = predict_single_sign(video)
+        type = 'practice'
     # Predict multiple (video calls)
     else:
         success, prediction, confidence, error = predict_live_sign(video)
+        type = 'call '
 
     if success == 0:
-        return (0, error, 'Incorrect + error', confidence)
+        return (0, error, f'Incorrect + {type} + error: {error}', confidence)
 
     # Practice module
     if word:
