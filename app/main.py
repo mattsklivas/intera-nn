@@ -227,67 +227,75 @@ def predict_live_sign(video):
     try:
         holistic = get_holistic_model()
 
-        with tempfile.NamedTemporaryFile(suffix = '.webm') as temp:
-            temp.write(video)            
+        try:
+            with tempfile.NamedTemporaryFile(suffix = '.webm') as temp:
+                temp.write(video)            
 
-            # Collect frames until no more frames remain 
-            cap = cv2.VideoCapture(temp.name)
-            while True:
-                # Capture frame from camera
-                ret, frame = cap.read()
-                if not ret:
-                    break
+                # Collect frames until no more frames remain 
+                cap = cv2.VideoCapture(temp.name)
+                while True:
+                    # Capture frame from camera
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
 
-                # Process every frame
-                processed_frame = processing_frame(frame, holistic)
+                    # Process every frame
+                    processed_frame = processing_frame(frame, holistic)
 
-                # Landmarks detected in frame
-                if processed_frame != []:
-                    # Reset count and set next sign started to true
-                    no_sign_count = 0     
-                    if not next_word_started: 
-                        print('New word started!')
-                        next_word_started = True
+                    # Landmarks detected in frame
+                    if processed_frame != []:
+                        # Reset count and set next sign started to true
+                        no_sign_count = 0     
+                        if not next_word_started: 
+                            print('New word started!')
+                            next_word_started = True
 
-                    # Add processed frame to current sign frames
-                    word_signs[curr_sign_index].append(processed_frame)
-                    print(' + Frame Added')
-                # Empty frame
-                else:
-                    # Count num consecutive empty frames
-                    no_sign_count += 1
+                        # Add processed frame to current sign frames
+                        word_signs[curr_sign_index].append(processed_frame)
+                        print(' + Frame Added')
+                    # Empty frame
+                    else:
+                        # Count num consecutive empty frames
+                        no_sign_count += 1
 
-                    # Start new sign word after n consecutive empty frames
-                    if no_sign_count >= NEXT_SIGN_BUFF:
-                        no_sign_count = 0
+                        # Start new sign word after n consecutive empty frames
+                        if no_sign_count >= NEXT_SIGN_BUFF:
+                            no_sign_count = 0
 
-                        # Only add new word after previous word is complete
-                        if next_word_started:
-                            print('End of sign detected! Waiting for start of next word!')
-                            curr_sign_index += 1
-                            word_signs.append([])
-                            next_word_started = False
+                            # Only add new word after previous word is complete
+                            if next_word_started:
+                                print('End of sign detected! Waiting for start of next word!')
+                                curr_sign_index += 1
+                                word_signs.append([])
+                                next_word_started = False
 
-            # Release the camera and close the window
-            cap.release()
+                # Release the camera and close the window
+                cap.release()
+        except Exception as e:
+            print('Video Error: ', e)
+            return 0, 'N/A', 0, f'Video Error: {str(e.args[0])}'
 
-        # For each word, fit the word to 48 frames then pass to model
-        for sign_word_frames in word_signs:
-            fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
+        try:
+            # For each word, fit the word to 48 frames then pass to model
+            for sign_word_frames in word_signs:
+                fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
 
-            # Pass to model and add to prediction sentence
-            y_pred = model(fitted_sign_frames)
-            _, predicted = torch.max(y_pred.data, 1)
+                # Pass to model and add to prediction sentence
+                y_pred = model(fitted_sign_frames)
+                _, predicted = torch.max(y_pred.data, 1)
 
-            predicted_word = signs[predicted]
-            predictions.append(predicted_word)
+                predicted_word = signs[predicted]
+                predictions.append(predicted_word)
 
-            # Get the confidence %
-            y_prob = softmax(y_pred)
-            confidence = y_prob[0][predicted] 
-            conf_vals.append(confidence.item())
+                # Get the confidence %
+                y_prob = softmax(y_pred)
+                confidence = y_prob[0][predicted] 
+                conf_vals.append(confidence.item())
 
             print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
+        except Exception as e:
+            print('Prediction Error: ', e)
+            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}'
 
     except Exception as e:
         print('NN Error: ', e)
@@ -366,7 +374,7 @@ def predict_single_sign(video):
     print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
 
     # Return result
-    return 1, predicted_word, confidence, None
+    return 1, predicted_word, confidence.item(), None
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
