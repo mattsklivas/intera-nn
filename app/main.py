@@ -301,7 +301,7 @@ def predict_live_sign(video):
             print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}' + traceback.print_exc()
+            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])} {traceback.print_exc()}'
 
     except Exception as e:
         print('NN Error: ', e)
