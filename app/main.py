@@ -43,7 +43,7 @@ except errors.CollectionInvalid as err:
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v4.0.pth'), map_location=torch.device('cpu'), strict=False)
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.0_15.pth'), map_location=torch.device('cpu'))
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
@@ -278,7 +278,7 @@ def predict_live_sign(video):
                 cap.release()
         except Exception as e:
             print('Video Error: ', e)
-            return 0, 'N/A', 0, f'Video Error: {str(e.args[0])}'
+            return 0, 'N/A', 0, f'Video Error: {str(e.args[0])}', []
 
         try:
             # For each word, fit the word to 48 frames then pass to model
@@ -304,11 +304,11 @@ def predict_live_sign(video):
                 print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
+            return 0, 'N/A', 0, f'Error: {str(e.args[0])}', []
 
     except Exception as e:
         print('NN Error: ', e)
-        return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
+        return 0, 'N/A', 0, f'Error: {str(e.args[0])}', []
 
 
     # # Append to list of predicted words and confidence percentages
@@ -329,7 +329,7 @@ def predict_live_sign(video):
     confidence = sum(conf_vals)/len(conf_vals)
 
     # Return result
-    return 1, prediction, confidence, None
+    return 1, prediction, confidence, None, predictions
 
 
 # Predict single sign from practice module
@@ -392,11 +392,12 @@ def predict_single_sign(video):
 
 def process_video(video, word=None):
     # Predict one sign (practice module)
+    signs = []
     if word:
         success, prediction, confidence, error = predict_single_sign(video)
     # Predict multiple (video calls)
     else:
-        success, prediction, confidence, error = predict_live_sign(video)
+        success, prediction, confidence, error, signs = predict_live_sign(video)
 
     if success == 0:
         return (0, error, f'Incorrect', confidence)
@@ -410,6 +411,7 @@ def process_video(video, word=None):
 
     # Video calls
     else:
+        prediction = f'{signs}\n{prediction}' if len(signs) > 0 else prediction
         return (1, f'Sign attempt processed successfully', prediction, confidence)
 
 def create_message_entry(room_id, to_user, from_user, prediction):
