@@ -294,21 +294,23 @@ def predict_live_sign(video):
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
 
-    # Append to list of predicted words and confidence percentages
-    predictions.append(predicted_word)
-    conf_vals.append(confidence.item())
-
-    prediction = " ".join(predictions)
-    response = openai.Completion.create(
-        model="text-curie-001",
-        prompt=f"Give the grammatically-correct version of this phrase : {prediction}",
-        temperature=0.7,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-        )
-    prediction = response.choices[0].text.strip()
+    # # Append to list of predicted words and confidence percentages
+    # predictions.append(predicted_word)
+    # conf_vals.append(confidence.item())
+    prediction = predictions[0]
+    if len(predictions) > 1:
+        prediction = " ".join(predictions)
+        response = openai.Completion.create(
+            model="text-curie-001",
+            prompt=f"Give the grammatically-correct version of this phrase : {prediction}",
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+            )
+        prediction = response.choices[0].text.strip()
+        
     confidence = sum(conf_vals)/len(conf_vals)
 
     # Return result
