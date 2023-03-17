@@ -304,11 +304,11 @@ def predict_live_sign(video):
                 print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Error: {str(e.args[0])}', []
+            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}', []
 
     except Exception as e:
         print('NN Error: ', e)
-        return 0, 'N/A', 0, f'Error: {str(e.args[0])}', []
+        return 0, 'N/A', 0, f'NN Error: {str(e.args[0])}', []
 
 
     # # Append to list of predicted words and confidence percentages
