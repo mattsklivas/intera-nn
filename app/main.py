@@ -283,6 +283,9 @@ def predict_live_sign(video):
         try:
             # For each word, fit the word to 48 frames then pass to model
             for sign_word_frames in word_signs:
+                if len(sign_word_frames) == 0:
+                    continue
+
                 fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
 
                 if not isinstance(fitted_sign_frames, list):
@@ -298,10 +301,10 @@ def predict_live_sign(video):
                     confidence = y_prob[0][predicted] 
                     conf_vals.append(confidence.item())
 
-            print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
+                print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])} {traceback.print_exc()}'
+            return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
     except Exception as e:
         print('NN Error: ', e)
@@ -359,20 +362,23 @@ def predict_single_sign(video):
             cap.release()
 
             # Fit
-            keypoints = live_video_temporal_fit(mp_frames)
+            y_pred = None
+            predicted = None
+            if len(mp_frames) > 0:
+                keypoints = live_video_temporal_fit(mp_frames)
 
-            # Neural network model prediction
-            y_pred = model(keypoints)
-            _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
+                # Neural network model prediction
+                y_pred = model(keypoints)
+                _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
+
     except Exception as e:
         print('NN Error: ', e)
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
-    # Get the confidence %
-    y_prob = softmax(y_pred)
-    confidence = y_prob[0][predicted]
-
     try:
+        # Get the confidence %
+        y_prob = softmax(y_pred)
+        confidence = y_prob[0][predicted]
         predicted_word = signs[predicted]
     except Exception as e:
         predicted_word = 'N/A'
@@ -396,11 +402,11 @@ def process_video(video, word=None):
         type = 'call '
 
     if success == 0:
-        return (0, error, f'Incorrect + {type} + error: {error}', confidence)
+        return (0, error, f'Incorrect', confidence)
 
     # Practice module
     if word:
-        result = 'Incorrect + practice'
+        result = 'Incorrect'
         if prediction == word:
             result = 'Correct'
         return (1, f'Sign attempt processed successfully', result, confidence)
@@ -474,15 +480,15 @@ def process_sign():
     status, message, prediction, confidence = process_video(video)
 
     if status == 0:
-        message += f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
+        prediction = f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
     elif confidence < 0.6:
-        message += f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
+        prediction = f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
 
     # Append message to chat
     status, m_ = create_message_entry(room_id, to_user, from_user, prediction)
 
     if status == 0:
-        return jsonify(error=message, status=401)
+        return jsonify(error=m_, status=401)
 
     return jsonify(message=m_, data={'room_id': room_id, 'prediction': prediction, 'confidence': confidence}, status=200)
 
