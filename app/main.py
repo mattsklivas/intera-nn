@@ -43,14 +43,15 @@ except errors.CollectionInvalid as err:
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v3.0_15.pth'), map_location=model.device)
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v6.2.pth'), map_location=model.device)
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
-signs = ['bad', 'bye', 'easy', 'good', 'happy', 'hello', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'why', 'yes', 'you']
+# signs = ['bad', 'bye', 'easy', 'good', 'happy', 'hello', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'why', 'yes', 'you']
+signs =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bad', 'bye', 'easy', 'good', 'happy', 'hello', 'how', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'what', 'when', 'where', 'which', 'who', 'why', 'yes', 'you']
 
 # Temporal fit constants
-INPUT_SIZE = 226
+INPUT_SIZE = 201
 # INPUT_SIZE = 201 #226
 NUM_SEQUENCES = 48
 
@@ -59,7 +60,7 @@ NUM_SEQUENCES = 48
 def processing_frame(frame, holistic):
     # Initialize pose and left/right hand tensoqs
     # left_hand, right_hand, pose = torch.zeros(21 * 3), torch.zeros(21 * 3), torch.zeros(25 * 3)
-    left_hand, right_hand, pose = torch.zeros(21 * 3), torch.zeros(21 * 3), torch.zeros(25 * 4)
+    left_hand, right_hand, pose = torch.zeros(21 * 3), torch.zeros(21 * 3), torch.zeros(25 * 3)
 
     # Pass frame to model by reference (not writeable) for improving performance
     frame.flags.writeable = False
@@ -98,8 +99,8 @@ def processing_frame(frame, holistic):
 
     # No pose detected
     if not results.pose_landmarks:
-        # pose = torch.zeros(25 * 3)
-        pose = torch.zeros(25 * 4)
+        pose = torch.zeros(25 * 3)
+        # pose = torch.zeros(25 * 4)
     # Pose detected
     else:
         # Add pose keypoints (25 w/ 3d coordinates plus visbility probability)
@@ -113,7 +114,7 @@ def processing_frame(frame, holistic):
             pose[shift_ind] = landmark.x
             pose[shift_ind + 1] = landmark.y
             pose[shift_ind + 2] = landmark.z  
-            pose[shift_ind + 3] = landmark.visibility
+            # pose[shift_ind + 3] = landmark.visibility
 
     # Concatenate processed frame
     return torch.cat([left_hand, right_hand, pose])
