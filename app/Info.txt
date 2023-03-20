@@ -1,9 +1,18 @@
 Below use abduls test, Train using tarun 62 + 42_rot_only_no_vis + top 62 scaled, test batch size = 64, batch size = 1024
 
+
+####################################################   modify asl_model.py for the following models, remove visibility from processing
 - model 3.9 Accuracy 28% , validation loss = 0.05 
 lr = 0.02, fchidden = 128, dropout = 0.25, rnn size 4, lstmhiddensize = 200, rnn layers 4
 
 - model 4.0 accuracy 27ish, validation loss 0.6
 lr = 0.02, fchidden = 64, dropout = 0.25, rnn size 4, lstmhiddensize = 200, rnn layers 4
+
+
+-model 6.2 (no load) acc = 60.74,  val = 0.05  46 epochs
+lr =0.0025, fchidden 128, dropout 0.23, rnn 4, lstmhidden 200, epochs 120, batch 512. scheduler.StepLR(optimizer, step_size=20, gamma=0.92)
+
+-model 6.0 acc = 58.5  vl =0.012 stoped at 57
+lr = 0.0019, fchidden = 128, dropout = 0.23, rnn size 4, lstmhiddensize = 200, batch size 2048
 
 top_62 =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bad', 'bye', 'easy', 'good', 'happy', 'hello', 'how', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'what', 'when', 'where', 'which', 'who', 'why', 'yes', 'you']
