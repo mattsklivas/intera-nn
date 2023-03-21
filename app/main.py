@@ -340,6 +340,11 @@ def predict_live_sign(video):
 def predict_single_sign(video):
     # Processed frames
     mp_frames = []
+    # Fit
+    y_pred = None
+    predicted = None
+    predictions = {}
+    preds_list = {}
 
     try:
         holistic = get_holistic_model()
@@ -365,11 +370,11 @@ def predict_single_sign(video):
             # Release the camera and close the window
             cap.release()
 
-            # Fit
-            y_pred = None
-            predicted = None
-            predictions = {}
-            preds_list = {}
+            # # Fit
+            # y_pred = None
+            # predicted = None
+            # predictions = {}
+            # preds_list = {}
             if len(mp_frames) > 0:
                 keypoints = live_video_temporal_fit(mp_frames)
 
