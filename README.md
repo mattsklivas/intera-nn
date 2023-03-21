@@ -4,4 +4,4 @@
 
 1. Execute the command `chmod 700 run.sh` to give full permissions to the docker script
 
-2. Execute the command `./install.sh` to build and run the docker image
+2. Execute the command `./run.sh` to build and run the docker image

@@ -293,15 +293,19 @@ def predict_live_sign(video):
 
                 predictions_list = {}
                 preds_list = {}
+                tensors = {}
                 predicted = None
                 fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
                 confidence = None
                 if not isinstance(fitted_sign_frames, list):
                     # Pass to model and add to prediction sentence
-                    for _ in range(0, 20):
+                    for _ in range(0, 200):
                         y_pred = model(fitted_sign_frames)
                         _, predicted = torch.max(y_pred.data, 1)
                         predicted_word = signs[predicted]
+
+                        # Get rate of predictions for each word
+                        print(f'Word {predicted_word} list: {predictions_list}')
 
                         if predicted_word in predictions_list:
                             predictions_list[predicted_word] += 1
@@ -309,19 +313,27 @@ def predict_live_sign(video):
                             predictions_list[predicted_word] = 1
 
                         preds_list[predicted_word] = y_pred
+                        tensors[predicted_word] = predicted
 
                         fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
-                    
-                    predicted = max(predictions_list, key=predictions_list.get)
+                
+                predicted = max(predictions_list, key=predictions_list.get)
+                print(f'Predicted: {predicted}\nPredictions: {predictions_list}')
 
-                    predictions.append(predicted)
+                # Get the most common prediction
+                y_pred = preds_list[predicted]        
+                tensor = tensors[predicted]
 
-                    # Get the confidence %
-                    y_prob = softmax(preds_list[predicted])
-                    confidence = y_prob[0][predicted] 
-                    conf_vals.append(confidence.item())
+                # get word
+                predicted_word = signs[tensor]
+                predictions.append(predicted)
 
-                print(f'Word prediction/Confidence %: {predictions_list} {preds_list} {prediction} {predicted}/{confidence.item()}')
+                # Get the confidence %
+                y_prob = softmax(y_pred)
+                confidence = y_prob[0][tensor]
+                conf_vals.append(confidence.item())
+
+                print(f'Word prediction/Confidence %: {predictions_list} {preds_list} {predicted_word} {predicted}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
             return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}', []
@@ -345,7 +357,7 @@ def predict_live_sign(video):
             presence_penalty=0
             )
         prediction = response.choices[0].text.strip()
-        
+
     confidence = sum(conf_vals)/len(conf_vals)
 
     # Return result
@@ -359,8 +371,10 @@ def predict_single_sign(video):
     # Fit
     y_pred = None
     predicted = None
+    confidence = None
     predictions = {}
     preds_list = {}
+    tensors = {}
 
     try:
         holistic = get_holistic_model()
@@ -378,7 +392,7 @@ def predict_single_sign(video):
 
                 # Process every frame
                 processed_frame = processing_frame(frame, holistic)
-                    
+
                 # Landmarks detected in frame
                 if processed_frame != []:
                     mp_frames.append(processed_frame)
@@ -387,7 +401,7 @@ def predict_single_sign(video):
             cap.release()
 
             if len(mp_frames) > 0:
-                for _ in range(0, 20):
+                for _ in range(0, 200):
                     keypoints = live_video_temporal_fit(mp_frames)
 
                     # Neural network model prediction
@@ -396,11 +410,14 @@ def predict_single_sign(video):
                     predicted_word = signs[predicted]
 
                     # Get rate of predictions for each word
+                    print(f'Word {predicted_word} list: {predictions}')
+
                     if predicted_word in predictions:
                         predictions[predicted_word] += 1
                     else:
                         predictions[predicted_word] = 1
                     preds_list[predicted_word] = y_pred
+                    tensors[predicted_word] = predicted
     except Exception as e:
         print('NN Error: ', e)
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
@@ -410,26 +427,29 @@ def predict_single_sign(video):
     try:
         # Get the most common prediction
         y_pred = preds_list[predicted]        
+        tensor = tensors[predicted]
 
         # Get the confidence %
         y_prob = softmax(y_pred)
-        confidence = y_prob[0][predicted]
-        predicted_word = signs[predicted]
+        confidence = y_prob[0][tensor]
+        predicted_word = signs[tensor]
     except Exception as e:
         predicted_word = 'N/A'
         print('Prediction Error: ', e)
 
     if (confidence):
-        print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence.item()} {predictions}')
+        confidence = confidence.item()
+        print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence} {predictions}')
 
     # Return result
-    return 1, predicted_word, confidence.item(), None
+    return 1, predicted_word, confidence, None
 
 # -------------------------------- CONTROLLERS ---------------------------------
 
 def process_video(video, word=None):
     # Predict one sign (practice module)
     signs = []
+    success = prediction = confidence = error = None
     if word:
         success, prediction, confidence, error = predict_single_sign(video)
     # Predict multiple (video calls)
