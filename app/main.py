@@ -295,7 +295,7 @@ def predict_live_sign(video):
                 preds_list = {}
                 predicted = None
                 fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
-
+                confidence = None
                 if not isinstance(fitted_sign_frames, list):
                     # Pass to model and add to prediction sentence
                     for _ in range(0, 20):
@@ -419,7 +419,8 @@ def predict_single_sign(video):
         predicted_word = 'N/A'
         print('Prediction Error: ', e)
 
-    print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence.item()} {predictions}')
+    if (confidence):
+        print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence.item()} {predictions}')
 
     # Return result
     return 1, predicted_word, confidence.item(), None
