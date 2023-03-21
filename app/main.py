@@ -368,19 +368,31 @@ def predict_single_sign(video):
             # Fit
             y_pred = None
             predicted = None
+            predictions = {}
+            preds_list = {}
             if len(mp_frames) > 0:
                 keypoints = live_video_temporal_fit(mp_frames)
 
-                # Neural network model prediction
-                y_pred = model(keypoints)
-                _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
+                for i in range(0, 20):
+                    # Neural network model prediction
+                    y_pred = model(keypoints)
+                    _, predicted = torch.max(y_pred.data, 1) # Apply softmax here to have percentage
 
+                    if predicted in predictions:
+                        predictions[predicted] += 1
+                    else:
+                        predictions[predicted] = 1
+                    preds_list[predicted] = y_pred
     except Exception as e:
         print('NN Error: ', e)
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
     try:
-        # Get the confidence %
+        # Get the most common prediction
+        predicted = max(predictions)
+        y_pred = preds_list[predicted]        
+        
+        # Get the confidence % 
         y_prob = softmax(y_pred)
         confidence = y_prob[0][predicted]
         predicted_word = signs[predicted]
