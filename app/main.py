@@ -390,6 +390,7 @@ def predict_single_sign(video):
     try:
         # Get the most common prediction
         predicted = max(predictions)
+        print(f'Predicted: {predicted}\nPredictions: {predictions}')
         y_pred = preds_list[predicted]        
         
         # Get the confidence % 
