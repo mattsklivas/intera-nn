@@ -233,6 +233,7 @@ def predict_live_sign(video):
     predictions = []
     conf_vals = []
 
+
     try:
         holistic = get_holistic_model()
 
@@ -292,20 +293,33 @@ def predict_live_sign(video):
 
                 fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
 
+                predictions_list = {}
+                preds_list = {}
+                predicted = None
                 if not isinstance(fitted_sign_frames, list):
                     # Pass to model and add to prediction sentence
-                    y_pred = model(fitted_sign_frames)
-                    _, predicted = torch.max(y_pred.data, 1)
+                    for i in range(0, 20):
+                        y_pred = model(fitted_sign_frames)
+                        _, predicted = torch.max(y_pred.data, 1)
+
+                        if predicted in predictions_list:
+                            predictions_list[predicted] += 1
+                        else:
+                            predictions_list[predicted] = 1
+
+                        preds_list[predicted] = y_pred
+                    
+                    predicted = max(predictions_list)
 
                     predicted_word = signs[predicted]
                     predictions.append(predicted_word)
 
                     # Get the confidence %
-                    y_prob = softmax(y_pred)
+                    y_prob = softmax(preds_list[predicted])
                     confidence = y_prob[0][predicted] 
                     conf_vals.append(confidence.item())
 
-                print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
+                print(f'Word prediction/Confidence %: {predictions_list} {preds_list} {prediction} {predicted_word}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
             return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}', []
@@ -406,7 +420,7 @@ def predict_single_sign(video):
         predicted_word = 'N/A'
         print('Prediction Error: ', e)
 
-    print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence.item()}')
+    print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence.item()} {predictions}')
 
     # Return result
     return 1, predicted_word, confidence.item(), None
