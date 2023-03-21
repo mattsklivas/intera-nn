@@ -48,7 +48,7 @@ model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
 # signs = ['bad', 'bye', 'easy', 'good', 'happy', 'hello', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'why', 'yes', 'you']
-signs =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bad', 'bye', 'easy', 'good', 'happy', 'hello', 'how', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'what', 'when', 'where', 'which', 'who', 'why', 'yes', 'you']
+signs =  {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bad', 'bye', 'easy', 'good', 'happy', 'hello', 'how', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'what', 'when', 'where', 'which', 'who', 'why', 'yes', 'you'}
 
 # Temporal fit constants
 INPUT_SIZE = 201
@@ -387,10 +387,10 @@ def predict_single_sign(video):
         print('NN Error: ', e)
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
+    predicted = max(predictions)
+    print(f'Predicted: {predicted}\nPredictions: {predictions}')
     try:
         # Get the most common prediction
-        predicted = max(predictions)
-        print(f'Predicted: {predicted}\nPredictions: {predictions}')
         y_pred = preds_list[predicted]        
         
         # Get the confidence % 
@@ -399,8 +399,9 @@ def predict_single_sign(video):
         predicted_word = signs[predicted]
     except Exception as e:
         predicted_word = 'N/A'
+        print('Prediction Error: ', e)
 
-    print(f'Word prediction/Confidence %: {predicted_word}/{confidence.item()}')
+    print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence.item()}')
 
     # Return result
     return 1, predicted_word, confidence.item(), None
