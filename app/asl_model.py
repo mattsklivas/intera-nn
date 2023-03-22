@@ -19,7 +19,7 @@ class AslNeuralNetwork(nn.Module):
 
         # Define neural network architecture and activiation function
         # Long Short Term Memory (Lstm) and Fully Connected (Fc) Layers
-        self.lstm = nn.LSTM(input_size, lstm_hidden_size, self.num_lstm_layers, batch_first=True, bidirectional=True, dropout=0.25)
+        self.lstm = nn.LSTM(input_size, lstm_hidden_size, self.num_lstm_layers, batch_first=True, bidirectional=True, dropout=0.23)
         self.fc1 = nn.Linear(lstm_hidden_size * 2, fc_hidden_size)
         self.fc2 = nn.Linear(fc_hidden_size, output_size)
 
