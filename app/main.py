@@ -295,7 +295,7 @@ def predict_live_sign(video):
                 confidence = None
                 if not isinstance(fitted_sign_frames, list):
                     # Pass to model and add to prediction sentence
-                    for _ in range(0, 200):
+                    for _ in range(0, 100):
                         y_pred = model(fitted_sign_frames)
                         _, predicted = torch.max(y_pred.data, 1)
                         predicted_word = signs[predicted]
@@ -339,7 +339,8 @@ def predict_live_sign(video):
         return 0, 'N/A', 0, f'NN Error: {str(e.args[0])}'
 
     # Append to list of predicted words and confidence percentages
-    prediction = predictions[0]
+
+    prediction = predictions[0] if len(predictions) >= 1 else None
     if len(predictions) > 1:
         prediction = " ".join(predictions)
         print('|||||TEST|||||', predictions, prediction)
@@ -387,7 +388,7 @@ def predict_single_sign(video):
             cap.release()
 
             if len(mp_frames) > 0:
-                for _ in range(0, 200):
+                for _ in range(0, 100):
                     keypoints = live_video_temporal_fit(mp_frames)
 
                     # Neural network model prediction
