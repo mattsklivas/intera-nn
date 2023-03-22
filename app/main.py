@@ -13,7 +13,6 @@ import torch
 import random
 import math
 import os
-import openai
 import sys
 import tempfile
 
@@ -23,9 +22,6 @@ from config import Database
 
 # load the environment variables from the .env file
 load_dotenv(find_dotenv())
-
-# OpenAPI key
-openai.api_key = env.get('OPENAI_API_KEY')
 
 app = Flask(__name__)
 CORS(app)
@@ -336,32 +332,22 @@ def predict_live_sign(video):
                 print(f'Word prediction/Confidence %: {predictions_list} {preds_list} {predicted_word} {predicted}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
-            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}', []
+            return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}'
 
     except Exception as e:
         print('NN Error: ', e)
-        return 0, 'N/A', 0, f'NN Error: {str(e.args[0])}', []
+        return 0, 'N/A', 0, f'NN Error: {str(e.args[0])}'
 
-
-    # # Append to list of predicted words and confidence percentages
+    # Append to list of predicted words and confidence percentages
     prediction = predictions[0]
     if len(predictions) > 1:
         prediction = " ".join(predictions)
-        response = openai.Completion.create(
-            model="text-curie-001",
-            prompt=f"Give the grammatically-correct version of this phrase : {prediction}",
-            temperature=0.7,
-            max_tokens=256,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-            )
-        prediction = response.choices[0].text.strip()
+        print('|||||TEST|||||', predictions, prediction)
 
     confidence = sum(conf_vals)/len(conf_vals)
 
     # Return result
-    return 1, prediction, confidence, None, predictions
+    return 1, prediction, confidence, None
 
 
 # Predict single sign from practice module
@@ -448,13 +434,12 @@ def predict_single_sign(video):
 
 def process_video(video, word=None):
     # Predict one sign (practice module)
-    signs = []
     success = prediction = confidence = error = None
     if word:
         success, prediction, confidence, error = predict_single_sign(video)
     # Predict multiple (video calls)
     else:
-        success, prediction, confidence, error, signs = predict_live_sign(video)
+        success, prediction, confidence, error = predict_live_sign(video)
 
     if success == 0:
         return (0, error, f'Incorrect', confidence)
@@ -468,7 +453,6 @@ def process_video(video, word=None):
 
     # Video calls
     else:
-        prediction = f'{signs}\n{prediction}' if len(signs) > 1 else prediction
         return (1, f'Sign attempt processed successfully', prediction, confidence)
 
 def create_message_entry(room_id, to_user, from_user, prediction):

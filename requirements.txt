@@ -7,7 +7,6 @@ mediapipe
 pymongo
 dnspython
 python-dotenv
-openai
 
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==1.13.1
