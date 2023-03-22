@@ -521,7 +521,7 @@ def process_sign():
 
     if status == 0:
         prediction = f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
-    if confidence == 0:
+    if confidence == 0 or confidence == None:
         prediction = '[INFO: No ASL gesture registered. Please refer to the help menu.]'
     elif confidence < 0.6:
         prediction = f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
