@@ -339,7 +339,6 @@ def predict_live_sign(video):
         return 0, 'N/A', 0, f'NN Error: {str(e.args[0])}'
 
     # Append to list of predicted words and confidence percentages
-
     prediction = predictions[0] if len(predictions) >= 1 else None
     if len(predictions) > 1:
         prediction = " ".join(predictions)
