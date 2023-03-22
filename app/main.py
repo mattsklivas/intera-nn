@@ -402,7 +402,7 @@ def predict_single_sign(video):
                     predicted_word = signs[predicted]
 
                     # Get rate of predictions for each word
-                    # print(f'Word {predicted_word} list: {predictions}')
+                    print(f'Word {predicted_word} list: {predictions}')
 
                     if predicted_word in predictions:
                         predictions[predicted_word] += 1
@@ -415,7 +415,7 @@ def predict_single_sign(video):
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
     predicted = max(predictions, key=predictions.get)
-    # print(f'Predicted: {predicted}\nPredictions: {predictions}')
+    print(f'Predicted: {predicted}\nPredictions: {predictions}')
     try:
         # Get the most common prediction
         y_pred = preds_list[predicted]        
@@ -431,7 +431,7 @@ def predict_single_sign(video):
 
     if (confidence):
         confidence = confidence.item()
-        # print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence} {predictions}')
+        print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence} {predictions}')
 
     # Return result
     return 1, predicted_word, confidence, None
