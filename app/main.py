@@ -301,7 +301,7 @@ def predict_live_sign(video):
                         predicted_word = signs[predicted]
 
                         # Get rate of predictions for each word
-                        print(f'Word {predicted_word} list: {predictions_list}')
+                        # print(f'Word {predicted_word} list: {predictions_list}')
 
                         if predicted_word in predictions_list:
                             predictions_list[predicted_word] += 1
@@ -314,7 +314,7 @@ def predict_live_sign(video):
                         fitted_sign_frames = live_video_temporal_fit(sign_word_frames)
                 
                 predicted = max(predictions_list, key=predictions_list.get)
-                print(f'Predicted: {predicted}\nPredictions: {predictions_list}')
+                # print(f'Predicted: {predicted}\nPredictions: {predictions_list}')
 
                 # Get the most common prediction
                 y_pred = preds_list[predicted]        
@@ -329,13 +329,13 @@ def predict_live_sign(video):
                 confidence = y_prob[0][tensor]
                 conf_vals.append(confidence.item())
 
-                print(f'Word prediction/Confidence %: {predictions_list} {preds_list} {predicted_word} {predicted}/{confidence.item()}')
+                # print(f'Word prediction/Confidence %: {predictions_list} {preds_list} {predicted_word} {predicted}/{confidence.item()}')
         except Exception as e:
             print('Prediction Error: ', e)
             return 0, 'N/A', 0, f'Prediction Error: {str(e.args[0])}'
 
     except Exception as e:
-        print('NN Error: ', e)
+        # print('NN Error: ', e)
         return 0, 'N/A', 0, f'NN Error: {str(e.args[0])}'
 
     # Append to list of predicted words and confidence percentages
@@ -343,9 +343,9 @@ def predict_live_sign(video):
     prediction = predictions[0] if len(predictions) >= 1 else None
     if len(predictions) > 1:
         prediction = " ".join(predictions)
-        print('|||||TEST|||||', predictions, prediction)
+        # print('|||||TEST|||||', predictions, prediction)
 
-    confidence = sum(conf_vals)/len(conf_vals)
+    confidence = sum(conf_vals)/len(conf_vals) if len(conf_vals) >= 1 else 0
 
     # Return result
     return 1, prediction, confidence, None
@@ -397,7 +397,7 @@ def predict_single_sign(video):
                     predicted_word = signs[predicted]
 
                     # Get rate of predictions for each word
-                    print(f'Word {predicted_word} list: {predictions}')
+                    # print(f'Word {predicted_word} list: {predictions}')
 
                     if predicted_word in predictions:
                         predictions[predicted_word] += 1
@@ -410,7 +410,7 @@ def predict_single_sign(video):
         return 0, 'N/A', 0, f'Error: {str(e.args[0])}'
 
     predicted = max(predictions, key=predictions.get)
-    print(f'Predicted: {predicted}\nPredictions: {predictions}')
+    # print(f'Predicted: {predicted}\nPredictions: {predictions}')
     try:
         # Get the most common prediction
         y_pred = preds_list[predicted]        
@@ -426,7 +426,7 @@ def predict_single_sign(video):
 
     if (confidence):
         confidence = confidence.item()
-        print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence} {predictions}')
+        # print(f'Word prediction/Confidence %: {predicted} {predicted_word}/{confidence} {predictions}')
 
     # Return result
     return 1, predicted_word, confidence, None
