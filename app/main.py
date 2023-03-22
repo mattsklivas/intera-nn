@@ -39,16 +39,22 @@ except errors.CollectionInvalid as err:
 # Load model
 current_dir = os.getcwd()
 model = AslNeuralNetwork()
-model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v6.2.pth'), map_location=model.device)
+model_state_dict = torch.load(os.path.join(current_dir, 'asl_model_v8.0.pth'), map_location=model.device)
 model.load_state_dict(model_state_dict)
 
 # Dictionary of all words here
+# 20 signs - model v3
 # signs = ['bad', 'bye', 'easy', 'good', 'happy', 'hello', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'why', 'yes', 'you']
-signs =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bad', 'bye', 'easy', 'good', 'happy', 'hello', 'how', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'what', 'when', 'where', 'which', 'who', 'why', 'yes', 'you']
+
+# 62 signs w/ letters + numbers - models v6, v6.2
+# signs =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bad', 'bye', 'easy', 'good', 'happy', 'hello', 'how', 'like', 'me', 'meet', 'more', 'no', 'please', 'sad', 'she', 'sorry', 'thank you', 'want', 'what', 'when', 'where', 'which', 'who', 'why', 'yes', 'you']
+
+# 64 signs - model v8
+signs = [ 'afternoon', 'answer', 'bad', 'big', 'buy', 'bye', 'can', 'day', 'easy', 'evening', 'excuse me', 'forget', 'give', 'good', 'happy', 'hear', 'hello', 'here', 'how', 'know', 'left', 'like', 'love', 'me', 'meet', 'month', 'more', 'morning', 'name', 'night', 'no', 'out', 'please', 'question', 'read', 'remember', 'right', 'sad', 'see', 'sell', 'she', 'small', 'sorry', 'take', 'thank you', 'think', 'time', 'today', 'tomorrow', 'understand', 'want', 'week', 'what', 'when', 'where', 'which', 'who', 'why', 'with', 'write', 'wrong', 'yes', 'yesterday', 'you']
 
 # Temporal fit constants
 INPUT_SIZE = 201
-# INPUT_SIZE = 201 #226
+# INPUT_SIZE = 226 #-> v3 model
 NUM_SEQUENCES = 48
 
 # -------------------------------- UTIL FUNCTIONS ---------------------------------
