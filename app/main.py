@@ -529,7 +529,7 @@ def process_sign():
         prediction = f'[ERROR: Prediction unsuccessful. Please invalidate this message with your intended message.]'
     if confidence == 0 or confidence == None:
         prediction = '[INFO: No ASL gesture registered. Please refer to the help menu.]'
-    elif confidence < 0.6:
+    elif confidence < 0.3:
         prediction = f'{prediction} [INFO: Low confidence in ASL sign(s) predicted ({round(confidence * 100, 2)}%)]'
 
     # Append message to chat
